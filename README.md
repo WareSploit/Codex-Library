@@ -54,5 +54,5 @@ local window = Codex:CreateWindow({
 ---
 
 <p align="center">
-  Made with 💜 by <b>ТВОЙ_НИК</b>
+  Made with 💜 by <b>бебройд</b>
 </p>
