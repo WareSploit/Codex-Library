@@ -1,47 +1,67 @@
--- Загрузка библиотеки Codex с GitHub
--- ЗАМЕНИ 'ТВОЙ_НИК' НА СВОЙ РЕАЛЬНЫЙ НИКНЕЙМ GITHUB!
-local Codex = loadstring(game:HttpGet("https://raw.githubusercontent.com/ТВОЙ_НИК/Codex-Library/main/library.lua"))()
+-- Load Codex Library
+local Codex = loadstring(game:HttpGet("https://raw.githubusercontent.com/WareSploit/Codex-Library/refs/heads/main/library.lua"))()
 
--- 1. Создаем главное окно
+-- Create window with watermark enabled
 local window = Codex:CreateWindow({
     Title = "Codex",
-    Version = "v1.0.2",
-    ToggleKey = Enum.KeyCode.RightShift -- Клавиша для скрытия/показа UI
+    Version = "v1.1.0",
+    ToggleKey = Enum.KeyCode.RightShift, -- Press RightShift to hide/show
+    Watermark = true -- Watermark in top-left corner
 })
 
--- 2. Создаем вкладки
+-- Create tabs
 local mainTab = window:CreateTab("Main", true)
-local miscTab = window:CreateTab("Misc", false)
-local settingsTab = window:CreateTab("Settings", false)
+local visualTab = window:CreateTab("Visuals", false)
+local configTab = window:CreateTab("Config", false)
 
--- 3. Добавляем элементы в Main
-mainTab:AddButton("Print Hello", function()
-    print("Hello from Codex!")
+-- === MAIN TAB ===
+mainTab:AddButton("Execute Script", function()
+    Codex:Notify("Script executed successfully!", "success")
+    print("Executed!")
+end)
+
+mainTab:AddButton("Show Error", function()
+    Codex:Notify("Something went wrong!", "error")
+end)
+
+mainTab:AddButton("Show Warning", function()
+    Codex:Notify("This is a warning", "warning")
 end)
 
 local espToggle = mainTab:AddToggle("Enable ESP", false, function(state)
-    print("ESP State:", state)
+    print("ESP:", state)
 end)
 
 mainTab:AddSlider("Walk Speed", 16, 100, 16, function(val)
-    print("Speed set to:", val)
+    print("Speed:", val)
 end)
 
-mainTab:AddDropdown("Teleport", {"Spawn", "Bank", "Roof", "Secret Base"}, function(val)
-    print("Teleporting to:", val)
+mainTab:AddDropdown("Teleport", {"Spawn", "Bank", "Roof"}, function(val)
+    print("TP:", val)
 end)
 
-mainTab:AddTextBox("Enter Command", function(text)
-    print("Command executed:", text)
+-- === VISUALS TAB ===
+visualTab:AddColorPicker("ESP Color", Color3.fromRGB(140, 60, 255), function(color)
+    print("Color changed:", color)
 end)
 
--- 4. Добавляем элементы в Misc
-miscTab:AddToggle("Anti AFK", false, function(state)
-    print("Anti AFK:", state)
-end)
-
-miscTab:AddSlider("FOV", 50, 120, 70, function(val)
+visualTab:AddSlider("FOV", 50, 120, 70, function(val)
     print("FOV:", val)
 end)
 
-print("✅ Codex Library loaded successfully!")
+-- === CONFIG TAB ===
+configTab:AddButton("Save Config", function()
+    window:SaveConfig("myconfig")
+end)
+
+configTab:AddButton("Load Config", function()
+    local data = window:LoadConfig("myconfig")
+    if data then
+        print("Loaded config data:", data)
+    end
+end)
+
+-- Initial notification
+Codex:Notify("Welcome to Codex v1.1.0!", "success")
+
+print("Codex Library v1.1.0 loaded!")
