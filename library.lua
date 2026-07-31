@@ -1,7 +1,7 @@
 --!strict
 -- ============================================================
---  CODEX LIBRARY v1.2.0
---  Splash Screen + Advanced Configs
+--  CODEX LIBRARY v1.3.0
+--  Theme System + Advanced Configs
 --  https://github.com/WareSploit/Codex-Library
 -- ============================================================
 
@@ -14,17 +14,71 @@ local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local THEME = {
-    BG = Color3.fromRGB(8, 8, 10),
-    TITLEBAR = Color3.fromRGB(5, 5, 7),
-    CONTROL = Color3.fromRGB(15, 15, 18),
-    CONTROL_HOVER = Color3.fromRGB(25, 25, 30),
-    ACCENT = Color3.fromRGB(140, 60, 255),
-    BORDER = Color3.fromRGB(40, 40, 45),
-    TEXT = Color3.fromRGB(240, 240, 245),
-    TEXT_DIM = Color3.fromRGB(100, 100, 110),
+-- ===================== THEMES =====================
+local THEMES = {
+    Dark = {
+        BG = Color3.fromRGB(8, 8, 10),
+        TITLEBAR = Color3.fromRGB(5, 5, 7),
+        CONTROL = Color3.fromRGB(15, 15, 18),
+        CONTROL_HOVER = Color3.fromRGB(25, 25, 30),
+        ACCENT = Color3.fromRGB(140, 60, 255),
+        BORDER = Color3.fromRGB(40, 40, 45),
+        TEXT = Color3.fromRGB(240, 240, 245),
+        TEXT_DIM = Color3.fromRGB(100, 100, 110),
+    },
+    Purple = {
+        BG = Color3.fromRGB(10, 8, 15),
+        TITLEBAR = Color3.fromRGB(7, 5, 10),
+        CONTROL = Color3.fromRGB(18, 15, 25),
+        CONTROL_HOVER = Color3.fromRGB(28, 25, 35),
+        ACCENT = Color3.fromRGB(180, 80, 255),
+        BORDER = Color3.fromRGB(45, 35, 60),
+        TEXT = Color3.fromRGB(245, 240, 255),
+        TEXT_DIM = Color3.fromRGB(120, 100, 140),
+    },
+    Blue = {
+        BG = Color3.fromRGB(8, 10, 15),
+        TITLEBAR = Color3.fromRGB(5, 7, 12),
+        CONTROL = Color3.fromRGB(15, 18, 25),
+        CONTROL_HOVER = Color3.fromRGB(25, 28, 35),
+        ACCENT = Color3.fromRGB(60, 140, 255),
+        BORDER = Color3.fromRGB(35, 45, 60),
+        TEXT = Color3.fromRGB(240, 245, 255),
+        TEXT_DIM = Color3.fromRGB(100, 120, 140),
+    },
+    Red = {
+        BG = Color3.fromRGB(15, 8, 8),
+        TITLEBAR = Color3.fromRGB(12, 5, 5),
+        CONTROL = Color3.fromRGB(25, 15, 15),
+        CONTROL_HOVER = Color3.fromRGB(35, 25, 25),
+        ACCENT = Color3.fromRGB(255, 60, 60),
+        BORDER = Color3.fromRGB(60, 35, 35),
+        TEXT = Color3.fromRGB(255, 240, 240),
+        TEXT_DIM = Color3.fromRGB(140, 100, 100),
+    },
+    Green = {
+        BG = Color3.fromRGB(8, 15, 10),
+        TITLEBAR = Color3.fromRGB(5, 12, 7),
+        CONTROL = Color3.fromRGB(15, 25, 18),
+        CONTROL_HOVER = Color3.fromRGB(25, 35, 28),
+        ACCENT = Color3.fromRGB(60, 255, 120),
+        BORDER = Color3.fromRGB(35, 60, 45),
+        TEXT = Color3.fromRGB(240, 255, 245),
+        TEXT_DIM = Color3.fromRGB(100, 140, 110),
+    },
+    Orange = {
+        BG = Color3.fromRGB(15, 12, 8),
+        TITLEBAR = Color3.fromRGB(12, 10, 5),
+        CONTROL = Color3.fromRGB(25, 20, 15),
+        CONTROL_HOVER = Color3.fromRGB(35, 30, 25),
+        ACCENT = Color3.fromRGB(255, 160, 60),
+        BORDER = Color3.fromRGB(60, 50, 35),
+        TEXT = Color3.fromRGB(255, 250, 240),
+        TEXT_DIM = Color3.fromRGB(140, 120, 100),
+    },
 }
 
+local THEME = THEMES.Dark
 local FONT = Enum.Font.Code
 local FONT_MED = Enum.Font.Code
 
@@ -69,6 +123,31 @@ Codex.__index = Codex
 Codex._config = {}
 Codex._notifContainer = nil
 Codex._watermark = nil
+Codex._currentTheme = "Dark"
+
+-- ===================== THEME SYSTEM =====================
+function Codex:SetTheme(themeName)
+    if THEMES[themeName] then
+        THEME = THEMES[themeName]
+        Codex._currentTheme = themeName
+        Codex._config["__theme"] = themeName
+        return true
+    end
+    return false
+end
+
+function Codex:GetCurrentTheme()
+    return Codex._currentTheme
+end
+
+function Codex:GetAvailableThemes()
+    local themes = {}
+    for name, _ in pairs(THEMES) do
+        table.insert(themes, name)
+    end
+    table.sort(themes)
+    return themes
+end
 
 -- ===================== SPLASH SCREEN =====================
 local function showSplash(title, duration)
@@ -112,15 +191,12 @@ local function showSplash(title, duration)
         Parent = bg
     })
     
-    -- Animate in
     tween(titleText, 0.5, {TextTransparency = 0}):Play()
     task.wait(0.3)
     tween(subtitle, 0.5, {TextTransparency = 0}):Play()
     
-    -- Wait
     task.wait(duration)
     
-    -- Animate out
     tween(titleText, 0.4, {TextTransparency = 1}):Play()
     tween(subtitle, 0.4, {TextTransparency = 1}):Play()
     tween(bg, 0.4, {BackgroundTransparency = 1}):Play()
@@ -278,13 +354,16 @@ end
 function Codex:CreateWindow(config)
     config = config or {}
     local title = config.Title or "Codex"
-    local version = config.Version or "v1.2.0"
+    local version = config.Version or "v1.3.0"
     local toggleKey = config.ToggleKey or Enum.KeyCode.RightShift
     local watermarkEnabled = config.Watermark ~= false
     local splashEnabled = config.Splash ~= false
     local splashDuration = config.SplashDuration or 2
+    local defaultTheme = config.Theme or "Dark"
     
-    -- Show splash screen
+    -- Apply default theme
+    Codex:SetTheme(defaultTheme)
+    
     if splashEnabled then
         showSplash(title, splashDuration)
     end
@@ -716,7 +795,7 @@ function Codex:CreateWindow(config)
         return Tab
     end
     
-    -- ===================== ADVANCED CONFIG SYSTEM =====================
+    -- ===================== CONFIG SYSTEM =====================
     function Window:SaveConfig(name)
         name = name or "default"
         makeFolder("CodexConfigs")
@@ -746,7 +825,6 @@ function Codex:CreateWindow(config)
     
     function Window:GetConfigList()
         if not listfiles then
-            Codex:Notify("File system not supported", "error")
             return {}
         end
         local ok, files = pcall(function() return listfiles("CodexConfigs") end)
@@ -762,6 +840,10 @@ function Codex:CreateWindow(config)
             end
         end
         return configs
+    end
+    
+    function Window:GetConfigCount()
+        return #Window:GetConfigList()
     end
     
     function Window:DeleteConfig(name)
