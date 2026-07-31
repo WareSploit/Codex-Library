@@ -4,17 +4,19 @@ local Codex = loadstring(game:HttpGet("https://raw.githubusercontent.com/WareSpl
 -- Create window with splash screen
 local window = Codex:CreateWindow({
     Title = "Codex",
-    Version = "v1.2.0",
+    Version = "v1.3.0",
     ToggleKey = Enum.KeyCode.RightShift,
     Watermark = true,
-    Splash = true, -- Enable splash screen
-    SplashDuration = 2 -- Duration in seconds
+    Splash = true,
+    SplashDuration = 2,
+    Theme = "Dark" -- Default theme
 })
 
--- Create tabs (Main, Visuals, Config)
+-- Create tabs (Main, Visuals, Settings, Config)
 local mainTab = window:CreateTab("Main", true)
 local visualTab = window:CreateTab("Visuals", false)
-local configTab = window:CreateTab("Config", false)
+local settingsTab = window:CreateTab("Settings", false)
+local configTab = window:CreateTab("Configs (" .. window:GetConfigCount() .. ")", false)
 
 -- === MAIN TAB ===
 mainTab:AddButton("Execute Script", function()
@@ -51,28 +53,51 @@ visualTab:AddToggle("Fullbright", false, function(state)
     print("Fullbright:", state)
 end)
 
--- === CONFIG TAB ===
-configTab:AddButton("Save Current Config", function()
-    window:SaveConfig("myconfig")
+-- === SETTINGS TAB ===
+settingsTab:AddDropdown("Theme", Codex:GetAvailableThemes(), function(theme)
+    Codex:SetTheme(theme)
+    Codex:Notify("Theme changed to: " .. theme, "success")
+    print("Theme:", theme)
 end)
 
-configTab:AddButton("Refresh Config List", function()
-    -- Just a placeholder, list will be shown below
+settingsTab:AddToggle("Show Watermark", true, function(state)
+    Codex:SetWatermark(state, "Codex v1.3.0")
+    print("Watermark:", state)
+end)
+
+settingsTab:AddButton("Reset All Settings", function()
+    Codex:Notify("Settings reset", "warning")
+end)
+
+-- === CONFIG TAB ===
+local configNameBox = configTab:AddTextBox("Enter config name...", function(text)
+    -- Just for display
+end)
+
+configTab:AddButton("Save Config", function()
+    local name = configNameBox.Text
+    if name == "" or name == "Enter config name..." then
+        Codex:Notify("Please enter a config name", "error")
+        return
+    end
+    window:SaveConfig(name)
+    configNameBox.Text = ""
+end)
+
+configTab:AddButton("Refresh List", function()
     Codex:Notify("Config list refreshed", "info")
 end)
 
--- Add config list display
+-- Config list display
 local configListFrame = Instance.new("Frame")
 configListFrame.Size = UDim2.new(1, 0, 0, 200)
-configListFrame.BackgroundColor3 = THEME.CONTROL
+configListFrame.BackgroundColor3 = Codex:GetCurrentTheme() == "Dark" and Color3.fromRGB(15, 15, 18) or Color3.fromRGB(18, 15, 25)
 configListFrame.BorderSizePixel = 0
 configListFrame.Parent = configTab._elements and configTab._elements[1] or configTab
 
--- Function to update config list
 local function updateConfigList()
-    -- Clear existing list
     for _, child in ipairs(configListFrame:GetChildren()) do
-        if child:IsA("TextButton") then
+        if child:IsA("TextButton") or child:IsA("TextLabel") then
             child:Destroy()
         end
     end
@@ -84,7 +109,7 @@ local function updateConfigList()
         noConfigs.Size = UDim2.new(1, 0, 0, 30)
         noConfigs.BackgroundTransparency = 1
         noConfigs.Text = "No saved configs"
-        noConfigs.TextColor3 = THEME.TEXT_DIM
+        noConfigs.TextColor3 = Color3.fromRGB(100, 100, 110)
         noConfigs.TextSize = 13
         noConfigs.Font = Enum.Font.Code
         noConfigs.Parent = configListFrame
@@ -95,9 +120,9 @@ local function updateConfigList()
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(1, 0, 0, 32)
         btn.Position = UDim2.new(0, 0, 0, (i-1) * 34)
-        btn.BackgroundColor3 = THEME.CONTROL
+        btn.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
         btn.Text = "  " .. configName
-        btn.TextColor3 = THEME.TEXT
+        btn.TextColor3 = Color3.fromRGB(240, 240, 245)
         btn.TextSize = 13
         btn.Font = Enum.Font.Code
         btn.TextXAlignment = Enum.TextXAlignment.Left
@@ -105,24 +130,22 @@ local function updateConfigList()
         btn.AutoButtonColor = false
         btn.Parent = configListFrame
         
-        -- Load button
         local loadBtn = Instance.new("TextButton")
         loadBtn.Size = UDim2.new(0, 60, 0, 26)
         loadBtn.Position = UDim2.new(1, -130, 0.5, -13)
-        loadBtn.BackgroundColor3 = THEME.CONTROL
+        loadBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
         loadBtn.Text = "Load"
-        loadBtn.TextColor3 = THEME.TEXT
+        loadBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
         loadBtn.TextSize = 12
         loadBtn.Font = Enum.Font.Code
         loadBtn.BorderSizePixel = 0
         loadBtn.AutoButtonColor = false
         loadBtn.Parent = btn
         
-        -- Delete button
         local deleteBtn = Instance.new("TextButton")
         deleteBtn.Size = UDim2.new(0, 60, 0, 26)
         deleteBtn.Position = UDim2.new(1, -65, 0.5, -13)
-        deleteBtn.BackgroundColor3 = THEME.CONTROL
+        deleteBtn.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
         deleteBtn.Text = "Delete"
         deleteBtn.TextColor3 = Color3.fromRGB(220, 60, 60)
         deleteBtn.TextSize = 12
@@ -143,11 +166,9 @@ local function updateConfigList()
     end
 end
 
--- Initial update
 task.wait(0.5)
 updateConfigList()
 
--- Welcome notification
-Codex:Notify("Welcome to Codex v1.2.0!", "success")
+Codex:Notify("Welcome to Codex v1.3.0!", "success")
 
-print("Codex Library v1.2.0 loaded!")
+print("Codex Library v1.3.0 loaded!")
