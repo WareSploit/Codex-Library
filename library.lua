@@ -1,7 +1,7 @@
 --!strict
 -- ============================================================
---  CODEX LIBRARY v1.1.0
---  Brutal Dark Theme, Sharp Edges, Purple Accent
+--  CODEX LIBRARY v1.2.0
+--  Splash Screen + Advanced Configs
 --  https://github.com/WareSploit/Codex-Library
 -- ============================================================
 
@@ -43,7 +43,6 @@ local function tween(obj, time, props)
     return TweenService:Create(obj, TweenInfo.new(time or 0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), props)
 end
 
--- Safe file operations (executor compatible)
 local function writeFile(path, content)
     if writefile then
         pcall(function() writefile(path, content) end)
@@ -70,6 +69,65 @@ Codex.__index = Codex
 Codex._config = {}
 Codex._notifContainer = nil
 Codex._watermark = nil
+
+-- ===================== SPLASH SCREEN =====================
+local function showSplash(title, duration)
+    duration = duration or 2
+    
+    local splashGui = create("ScreenGui", {
+        Name = "CodexSplash",
+        ResetOnSpawn = false,
+        DisplayOrder = 999,
+        Parent = playerGui
+    })
+    
+    local bg = create("Frame", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundColor3 = THEME.BG,
+        BorderSizePixel = 0,
+        Parent = splashGui
+    })
+    
+    local titleText = create("TextLabel", {
+        Size = UDim2.new(0, 400, 0, 100),
+        Position = UDim2.new(0.5, -200, 0.5, -50),
+        BackgroundTransparency = 1,
+        Text = title or "Codex",
+        TextColor3 = THEME.TEXT,
+        TextSize = 64,
+        Font = FONT_MED,
+        TextTransparency = 1,
+        Parent = bg
+    })
+    
+    local subtitle = create("TextLabel", {
+        Size = UDim2.new(0, 400, 0, 30),
+        Position = UDim2.new(0.5, -200, 0.5, 60),
+        BackgroundTransparency = 1,
+        Text = "Loading...",
+        TextColor3 = THEME.TEXT_DIM,
+        TextSize = 16,
+        Font = FONT,
+        TextTransparency = 1,
+        Parent = bg
+    })
+    
+    -- Animate in
+    tween(titleText, 0.5, {TextTransparency = 0}):Play()
+    task.wait(0.3)
+    tween(subtitle, 0.5, {TextTransparency = 0}):Play()
+    
+    -- Wait
+    task.wait(duration)
+    
+    -- Animate out
+    tween(titleText, 0.4, {TextTransparency = 1}):Play()
+    tween(subtitle, 0.4, {TextTransparency = 1}):Play()
+    tween(bg, 0.4, {BackgroundTransparency = 1}):Play()
+    
+    task.wait(0.4)
+    splashGui:Destroy()
+end
 
 -- ===================== NOTIFICATIONS =====================
 local function initNotifContainer()
@@ -124,7 +182,6 @@ function Codex:Notify(message, notifType, duration)
     })
     addStroke(notif, THEME.BORDER, 1)
     
-    -- Accent bar on left
     local bar = create("Frame", {
         Size = UDim2.new(0, 4, 1, 0),
         BackgroundColor3 = accentColor,
@@ -145,11 +202,9 @@ function Codex:Notify(message, notifType, duration)
         Parent = notif
     })
     
-    -- Animate in
     notif.Position = UDim2.new(1, 0, 0, 0)
     tween(notif, 0.3, {Position = UDim2.new(0, 0, 0, 0)}):Play()
     
-    -- Wait and animate out
     task.delay(duration, function()
         tween(notif, 0.3, {Position = UDim2.new(1, 0, 0, 0)}):Play()
         task.wait(0.3)
@@ -201,7 +256,6 @@ function Codex:SetWatermark(enabled, customText)
         Parent = wm
     })
     
-    -- Update FPS live
     local fps = 60
     local lastTime = tick()
     local frameCount = 0
@@ -224,9 +278,16 @@ end
 function Codex:CreateWindow(config)
     config = config or {}
     local title = config.Title or "Codex"
-    local version = config.Version or "v1.1.0"
+    local version = config.Version or "v1.2.0"
     local toggleKey = config.ToggleKey or Enum.KeyCode.RightShift
     local watermarkEnabled = config.Watermark ~= false
+    local splashEnabled = config.Splash ~= false
+    local splashDuration = config.SplashDuration or 2
+    
+    -- Show splash screen
+    if splashEnabled then
+        showSplash(title, splashDuration)
+    end
     
     local old = playerGui:FindFirstChild("CodexUI")
     if old then old:Destroy() end
@@ -295,7 +356,6 @@ function Codex:CreateWindow(config)
         Codex:Notify("Window closed", "info")
     end)
     
-    -- Dragging
     local dragging, dragStart, startPos = false, nil, nil
     titleBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -314,7 +374,6 @@ function Codex:CreateWindow(config)
         end
     end)
     
-    -- Global GUI Toggle (RightShift or custom key)
     local uiVisible = true
     UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
@@ -324,7 +383,6 @@ function Codex:CreateWindow(config)
         end
     end)
     
-    -- Tabs
     local tabBar = create("Frame", {
         Size = UDim2.new(1, 0, 0, 36),
         Position = UDim2.new(0, 0, 0, 38),
@@ -394,7 +452,6 @@ function Codex:CreateWindow(config)
         Tab._name = name
         Tab._elements = {}
         
-        -- BUTTON
         function Tab:AddButton(text, callback)
             local btn = create("TextButton", {
                 Size = UDim2.new(1, 0, 0, 38),
@@ -416,7 +473,6 @@ function Codex:CreateWindow(config)
             return btn
         end
         
-        -- TOGGLE (simplified, no keybind button)
         function Tab:AddToggle(text, default, callback, configId)
             configId = configId or (name .. "_" .. text)
             
@@ -469,7 +525,6 @@ function Codex:CreateWindow(config)
             }
         end
         
-        -- SLIDER
         function Tab:AddSlider(text, min, max, default, callback, configId)
             configId = configId or (name .. "_" .. text)
             
@@ -520,7 +575,6 @@ function Codex:CreateWindow(config)
             return holder
         end
         
-        -- DROPDOWN
         function Tab:AddDropdown(text, options, callback, configId)
             configId = configId or (name .. "_" .. text)
             
@@ -560,7 +614,6 @@ function Codex:CreateWindow(config)
             return holder
         end
         
-        -- TEXTBOX
         function Tab:AddTextBox(placeholder, callback)
             local box = create("TextBox", {Size = UDim2.new(1, 0, 0, 38), BackgroundColor3 = THEME.CONTROL, PlaceholderText = placeholder, PlaceholderColor3 = THEME.TEXT_DIM, Text = "", TextColor3 = THEME.TEXT, TextSize = 14, Font = FONT_MED, ClearTextOnFocus = false, BorderSizePixel = 0, Parent = page})
             local stroke = addStroke(box, THEME.BORDER, 2)
@@ -570,7 +623,6 @@ function Codex:CreateWindow(config)
             return box
         end
         
-        -- COLOR PICKER
         function Tab:AddColorPicker(text, defaultColor, callback, configId)
             configId = configId or (name .. "_" .. text)
             defaultColor = defaultColor or THEME.ACCENT
@@ -593,7 +645,6 @@ function Codex:CreateWindow(config)
             
             Codex._config[configId] = {type = "color", value = {r, g, b}}
             
-            -- Helper: mini slider for RGB
             local function createRGBSlider(labelText, initialValue, onChange)
                 local frame = create("Frame", {Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, Parent = pickerContainer})
                 create("TextLabel", {Size = UDim2.new(0, 20, 1, 0), BackgroundTransparency = 1, Text = labelText, TextColor3 = THEME.TEXT_DIM, TextSize = 12, Font = FONT_MED, TextXAlignment = Enum.TextXAlignment.Left, Parent = frame})
@@ -665,7 +716,7 @@ function Codex:CreateWindow(config)
         return Tab
     end
     
-    -- ===================== CONFIG SAVE/LOAD =====================
+    -- ===================== ADVANCED CONFIG SYSTEM =====================
     function Window:SaveConfig(name)
         name = name or "default"
         makeFolder("CodexConfigs")
@@ -691,6 +742,42 @@ function Codex:CreateWindow(config)
         end
         Codex:Notify("Config loaded: " .. name, "success")
         return parsed
+    end
+    
+    function Window:GetConfigList()
+        if not listfiles then
+            Codex:Notify("File system not supported", "error")
+            return {}
+        end
+        local ok, files = pcall(function() return listfiles("CodexConfigs") end)
+        if not ok then return {} end
+        
+        local configs = {}
+        for _, file in ipairs(files) do
+            if file:match("%.json$") then
+                local name = file:match("([^/\\]+)%.json$")
+                if name then
+                    table.insert(configs, name)
+                end
+            end
+        end
+        return configs
+    end
+    
+    function Window:DeleteConfig(name)
+        if not delfile then
+            Codex:Notify("File system not supported", "error")
+            return false
+        end
+        local path = "CodexConfigs/" .. name .. ".json"
+        local ok = pcall(function() delfile(path) end)
+        if ok then
+            Codex:Notify("Config deleted: " .. name, "success")
+            return true
+        else
+            Codex:Notify("Failed to delete config", "error")
+            return false
+        end
     end
     
     return Window
